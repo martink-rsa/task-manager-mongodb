@@ -1,0 +1,20 @@
+{
+  "name": "tasks-app-mongodb",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "startdb": "/home/martin/mongodb/bin/mongod --dbpath=/home/martin/mongodb-data",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@types/mongodb": "^3.5.31",
+    "chalk": "^4.1.0",
+    "dotenv": "^8.2.0",
+    "mongodb": "^3.6.2",
+    "mongoose": "^5.10.13"
+  }
+}
