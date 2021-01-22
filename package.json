@@ -4,6 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
+    "dev": "nodemon src/index.js",
+    "start": "node src/index.js",
     "startdb": "/home/martin/mongodb/bin/mongod --dbpath=/home/martin/mongodb-data",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -14,8 +16,10 @@
     "@types/mongodb": "^3.5.31",
     "chalk": "^4.1.0",
     "dotenv": "^8.2.0",
+    "express": "^4.17.1",
     "mongodb": "^3.6.2",
     "mongoose": "^5.10.13",
+    "nodemon": "^2.0.7",
     "validator": "^13.5.2"
   }
 }
