@@ -1,6 +1,6 @@
 const { MongoClient, ObjectID } = require('mongodb');
 const chalk = require('chalk');
-const msg = require('./utils/msg');
+const log = require('./utils/log');
 
 const connectionURL = 'mongodb://127.0.0.1:27017';
 const databaseName = 'task-manager';
@@ -11,11 +11,11 @@ MongoClient.connect(
   connectionURL,
   { useNewUrlParser: true },
   (error, client) => {
-    msg.info('Attempting to connect to db: ' + connectionURL);
+    log.info('Attempting to connect to db: ' + connectionURL);
     if (error) {
-      return msg.error('Unable to connect, terminating application');
+      return log.error('Unable to connect, terminating application');
     }
-    msg.success('Connected to db successfully');
+    log.success('Connected to db successfully');
     const db = client.db(databaseName);
 
     /* db.collection('users').insertOne(
