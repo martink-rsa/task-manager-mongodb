@@ -1,4 +1,5 @@
 const express = require('express');
+const mongoose = require('mongoose');
 const router = new express.Router();
 const Task = require('../models/task');
 
@@ -64,10 +65,12 @@ router.patch('/tasks/:id', async (req, res) => {
   }
 
   try {
-    const task = await Task.findByIdAndUpdate(_id, req.body, {
-      new: true, // Ensures that the updated user is returned instead of the user before it was updated
-      runValidators: true, // Ensures that validations are run on the new data that will be used in the update
-    });
+    const task = await Task.findById(_id);
+
+    updateKeys.forEach((update) => (task[update] = req.body[update]));
+
+    await task.save();
+
     res.status(200).send(task);
   } catch (e) {
     console.log(e);
