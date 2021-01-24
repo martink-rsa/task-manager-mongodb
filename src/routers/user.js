@@ -1,5 +1,7 @@
 const express = require('express');
 const mongoose = require('mongoose');
+const multer = require('multer');
+const sharp = require('sharp');
 const router = new express.Router();
 const User = require('../models/user');
 const auth = require('../middleware/auth');
@@ -29,7 +31,7 @@ router.patch('/users/me', auth, async (req, res) => {
   const updateKeys = Object.keys(req.body);
   const allowedKeys = ['name', 'email', 'password'];
   const isValidOperation = updateKeys.every((update) =>
-    allowedKeys.includes(update),
+    allowedKeys.includes(update)
   );
 
   if (!isValidOperation) {
@@ -63,7 +65,7 @@ router.post('/users/login', async (req, res) => {
     //    in the schema file
     const user = await User.findByCredentials(
       req.body.email,
-      req.body.password,
+      req.body.password
     );
     const token = await user.generateAuthToken();
     res.status(200).send({ user, token });
@@ -109,6 +111,71 @@ router.post('/users/signup', async (req, res) => {
     res.status(201).send({ user, token });
   } catch (e) {
     res.status(500).send('Error');
+  }
+});
+
+const upload = multer({
+  limits: {
+    fileSize: 1000000, // 1mb
+  },
+  fileFilter(req, file, cb) {
+    // if (!file.originalname.match(/\.(doc|docx)$/)) {
+    // Need to consider tiff, svg, webp and gif
+    if (!file.originalname.match(/\.(jpg|jpeg|png)$/)) {
+      return cb(new Error('Please upload an image file'));
+    }
+    cb(undefined, true);
+  },
+});
+
+router.post(
+  '/users/me/avatar',
+  auth,
+  upload.single('avatar'),
+  async (req, res) => {
+    // Resizing the image using sharp
+    const buffer = await sharp(req.file.buffer)
+      .resize({ width: 250, height: 250 })
+      .png()
+      .toBuffer();
+    req.user.avatar = buffer;
+    await req.user.save();
+    res.status(200).send({ message: 'Image uploaded' });
+  },
+  //  This error handler is used to send a clean error message which would
+  //  otherwise be an HTML file
+  (error, req, res, next) => {
+    res.status(400).send({ error: error.message });
+  }
+);
+
+router.delete('/users/me/avatar', auth, async (req, res) => {
+  if (!req.user.avatar) {
+    return res.status(404).send({ message: 'No avatar image to delete' });
+  }
+  try {
+    req.user.avatar = undefined;
+    await req.user.save();
+    res.status(200).send({ message: 'Avatar deleted' });
+  } catch (e) {
+    res.status(500).send('Error');
+  }
+});
+
+router.get('/users/:id/avatar', async (req, res) => {
+  const _id = req.params.id;
+
+  try {
+    const user = await User.findById(_id);
+
+    if (!user || !user.avatar) {
+      throw new Error();
+    }
+
+    res.set('Content-Type', 'image/png');
+    res.status(200).send(user.avatar);
+  } catch (e) {
+    res.status(500).send('Error getting user avatar');
   }
 });
 

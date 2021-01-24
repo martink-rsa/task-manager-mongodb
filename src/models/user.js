@@ -54,11 +54,14 @@ const userSchema = new mongoose.Schema(
         },
       },
     ],
+    avatar: {
+      type: Buffer,
+    },
   },
   // Options below
   // Timestamps will show timestamps of each of the users
   // createdAt and updatedAt
-  { timestamps: true },
+  { timestamps: true }
 );
 
 userSchema.virtual('tasks', {
@@ -84,7 +87,7 @@ userSchema.methods.generateAuthToken = async function () {
   const user = this;
   const token = jwt.sign(
     { _id: user._id.toString() },
-    process.env.TOKEN_SECRET,
+    process.env.TOKEN_SECRET
   );
 
   user.tokens = user.tokens.concat({ token: token });
@@ -107,6 +110,7 @@ userSchema.methods.toJSON = function () {
 
   delete userObject.password;
   delete userObject.tokens;
+  delete userObject.avatar;
 
   return userObject;
 };
