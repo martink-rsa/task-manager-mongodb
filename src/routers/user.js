@@ -23,37 +23,8 @@ router.get('/users/me', auth, async (req, res) => {
   res.status(200).send(req.user);
 });
 
-// Get a single user using an id
-router.get('/users/:id', async (req, res) => {
-  const _id = req.params.id;
-
-  // Need to check that the id will match the MongoDB id type
-  //    otherwise an error will occur here if the id passed
-  //    does not match a MongoDB ID
-  if (!mongoose.isValidObjectId(_id)) {
-    return res.status(400).send({ error: 'ID is not of valid ID type' });
-  }
-
-  try {
-    const user = await User.findById(_id);
-    // No user exists
-    if (!user) {
-      return res.status(404).send();
-    }
-    res.status(200).send(user);
-  } catch (e) {
-    res.status(500).send(e);
-  }
-});
-
 // Update a user using an id
-router.patch('/users/:id', async (req, res) => {
-  const _id = req.params.id;
-
-  if (!mongoose.isValidObjectId(_id)) {
-    return res.status(400).send({ error: 'ID is not of valid ID type' });
-  }
-
+router.patch('/users/:id', auth, async (req, res) => {
   // This check ensures that all the keys being passed are part of the accepted keys
   const updateKeys = Object.keys(req.body);
   const allowedKeys = ['name', 'email', 'password'];
@@ -66,36 +37,25 @@ router.patch('/users/:id', async (req, res) => {
   }
 
   try {
-    // Manually find the user then save so that the 'pre' middleware
-    //    in the schema will run
-    const user = await User.findById(req.params.id);
-    if (!user) {
-      return res.status(404).send('No user found');
-    }
+    updateKeys.forEach((update) => (req.user[update] = req.body[update]));
+    await req.user.save();
 
-    updateKeys.forEach((update) => (user[update] = req.body[update]));
-    await user.save();
-
-    res.status(200).send(user);
+    res.status(200).send({ message: 'Updated user', user: req.user });
   } catch (e) {
     res.status(500).send(e);
   }
 });
 
-// Delete a user using an id
-router.delete('/users/:id', async (req, res) => {
-  const _id = req.params.id;
-
-  if (!mongoose.isValidObjectId(_id)) {
-    return res.status(400).send({ error: 'ID is not of valid ID type' });
-  }
-
+// Delete a user: Allow a user to delete their profile
+router.delete('/users/me', auth, async (req, res) => {
   try {
-    const user = await User.findByIdAndDelete(_id);
+    /* const user = await User.findByIdAndDelete(req.user._id);
     if (!user) {
       return res.status(404).send({ message: 'User not found' });
     }
-    res.status(200).send({ message: 'User deleted', user });
+     */
+    await req.user.remove();
+    res.status(200).send({ message: 'User deleted' });
   } catch (e) {
     res.status(500).send(e);
   }

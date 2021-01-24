@@ -145,8 +145,6 @@ userSchema.pre('save', async function (next) {
     user.password = await bcrypt.hash(user.password, 8);
   }
 
-  log.info('Triggered "save" middleware');
-
   next();
 });
 
