@@ -5,7 +5,6 @@ const dotenv = require('dotenv');
 const userRouter = require('./routers/user');
 const taskRouter = require('./routers/task');
 // Middleware
-const auth = require('./middleware/auth');
 
 // Load the Mongoose file which has the MongoDB connection
 require('./db/mongoose');

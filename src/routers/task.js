@@ -15,21 +15,29 @@ router.post('/tasks', auth, async (req, res) => {
   }
 });
 
+// GET /tasks?completed=true
 router.get('/tasks', auth, async (req, res) => {
-  // const user = req.user;
+  const match = {};
+
+  if (req.query.completed) {
+    // 'completed' is not a boolean even though it's coming back as true
+    //  or false; it's still a string. We can check if it has the string 'true'
+    //  then pass back boolean true, otherwise pass back false.
+    match.completed = req.query.completed === 'true';
+  }
   try {
-    // const tasks = await Task.find({});
-    // const fetchedUser = await user.populate('tasks').execPopulate();
-    // console.log(user);
-    // console.log(tasks)
-    await req.user.populate('tasks').execPopulate();
+    await req.user
+      .populate({
+        path: 'tasks',
+        match,
+      })
+      .execPopulate();
 
     if (!req.user.tasks) {
       return res.status(200).send('No tasks found');
     }
     res.status(200).send(req.user.tasks);
   } catch (e) {
-    console.log(e);
     res.status(400).send(e);
   }
 });
