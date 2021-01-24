@@ -3,9 +3,7 @@ const validator = require('validator');
 const bcrypt = require('bcrypt');
 const log = require('../utils/log');
 const jwt = require('jsonwebtoken');
-const dotenv = require('dotenv');
-
-dotenv.config();
+const Task = require('../models/task');
 
 const userSchema = new mongoose.Schema({
   name: {
@@ -55,6 +53,16 @@ const userSchema = new mongoose.Schema({
       },
     },
   ],
+});
+
+userSchema.virtual('tasks', {
+  ref: 'Task',
+  // What field is referenced when used by the other 'object'
+  // This is like the foreign key
+  localField: '_id',
+  // This is the field on the referenced 'object', e.g. Task
+  // This is like what the foreign key is called
+  foreignField: 'owner',
 });
 
 // Database logic should be encapsulated within the data model.
@@ -145,6 +153,13 @@ userSchema.pre('save', async function (next) {
     user.password = await bcrypt.hash(user.password, 8);
   }
 
+  next();
+});
+
+// Delete user tasks when user is removed
+userSchema.pre('remove', async function (next) {
+  const user = this;
+  await Task.deleteMany({ owner: user._id });
   next();
 });
 

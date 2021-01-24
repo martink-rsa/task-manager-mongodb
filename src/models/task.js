@@ -10,6 +10,13 @@ const taskSchema = new mongoose.Schema({
     type: Boolean,
     default: false, // Setting a default value
   },
+  owner: {
+    type: mongoose.Schema.Types.ObjectId,
+    required: true,
+    // This creates a reference to the User object,
+    // which can then be populated with populate('owner').execPopulate()
+    ref: 'User',
+  },
 });
 
 taskSchema.pre('save', async function (next) {

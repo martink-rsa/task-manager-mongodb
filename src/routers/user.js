@@ -18,13 +18,13 @@ router.post('/users', async (req, res) => {
   }
 });
 
-// Get all users
+// Gets a user's profile
 router.get('/users/me', auth, async (req, res) => {
   res.status(200).send(req.user);
 });
 
 // Update a user using an id
-router.patch('/users/:id', auth, async (req, res) => {
+router.patch('/users/me', auth, async (req, res) => {
   // This check ensures that all the keys being passed are part of the accepted keys
   const updateKeys = Object.keys(req.body);
   const allowedKeys = ['name', 'email', 'password'];
@@ -49,11 +49,6 @@ router.patch('/users/:id', auth, async (req, res) => {
 // Delete a user: Allow a user to delete their profile
 router.delete('/users/me', auth, async (req, res) => {
   try {
-    /* const user = await User.findByIdAndDelete(req.user._id);
-    if (!user) {
-      return res.status(404).send({ message: 'User not found' });
-    }
-     */
     await req.user.remove();
     res.status(200).send({ message: 'User deleted' });
   } catch (e) {
