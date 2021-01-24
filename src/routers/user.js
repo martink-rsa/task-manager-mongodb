@@ -30,7 +30,7 @@ router.patch('/users/me', auth, async (req, res) => {
   const updateKeys = Object.keys(req.body);
   const allowedKeys = ['name', 'email', 'password'];
   const isValidOperation = updateKeys.every((update) =>
-    allowedKeys.includes(update),
+    allowedKeys.includes(update)
   );
 
   if (!isValidOperation) {
@@ -64,7 +64,7 @@ router.post('/users/login', async (req, res) => {
     //    in the schema file
     const user = await User.findByCredentials(
       req.body.email,
-      req.body.password,
+      req.body.password
     );
     const token = await user.generateAuthToken();
     res.status(200).send({ user, token });
@@ -114,7 +114,6 @@ router.post('/users/signup', async (req, res) => {
 });
 
 const upload = multer({
-  dest: 'images',
   limits: {
     fileSize: 1000000, // 1mb
   },
@@ -125,19 +124,52 @@ const upload = multer({
       return cb(new Error('Please upload an image file'));
     }
     cb(undefined, true);
-    /* cb(new Error('File must be a PDF'));
-    cb(undefined, true)
-    cb(undefined, false) */
-    console.log(file);
   },
 });
 
-router.post('/users/me/avatar', upload.single('avatar'), async (req, res) => {
+router.post(
+  '/users/me/avatar',
+  auth,
+  upload.single('avatar'),
+  async (req, res) => {
+    req.user.avatar = req.file.buffer;
+    await req.user.save();
+    res.status(200).send({ message: 'Image uploaded' });
+  },
+  //  This error handler is used to send a clean error message which would
+  //  otherwise be an HTML file
+  (error, req, res, next) => {
+    res.status(400).send({ error: error.message });
+  }
+);
+
+router.delete('/users/me/avatar', auth, async (req, res) => {
+  if (!req.user.avatar) {
+    return res.status(404).send({ message: 'No avatar image to delete' });
+  }
   try {
-    //
-    res.status(201).send({ message: 'Image uploaded' });
+    req.user.avatar = undefined;
+    await req.user.save();
+    res.status(200).send({ message: 'Avatar deleted' });
   } catch (e) {
     res.status(500).send('Error');
+  }
+});
+
+router.get('/users/:id/avatar', async (req, res) => {
+  const _id = req.params.id;
+
+  try {
+    const user = await User.findById(_id);
+
+    if (!user || !user.avatar) {
+      throw new Error();
+    }
+
+    res.set('Content-Type', 'image/jpg');
+    res.status(200).send(user.avatar);
+  } catch (e) {
+    res.status(500).send('Error getting user avatar');
   }
 });
 
