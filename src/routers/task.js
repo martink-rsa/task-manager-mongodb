@@ -15,21 +15,48 @@ router.post('/tasks', auth, async (req, res) => {
   }
 });
 
+// GET /tasks?completed=true
+// GET /tasks?limit=10&skip=0
+// GET /tasks?sortBy=createdAt_asc
+// GET /tasks?sortBy=createdAt_desc
 router.get('/tasks', auth, async (req, res) => {
-  // const user = req.user;
+  const match = {};
+  const sort = {};
+
+  if (req.query.completed) {
+    // 'completed' is not a boolean even though it's coming back as true
+    //  or false; it's still a string. We can check if it has the string 'true'
+    //  then pass back boolean true, otherwise pass back false.
+    match.completed = req.query.completed === 'true';
+  }
+
+  if (req.query.sortBy) {
+    // The query arrives as 'createdAt_asc'
+    // Split it at the underscore, then use the first element as
+    // the key in the parts object. Then set the direction based on it
+    // being 'desc' or not
+    const parts = req.query.sortBy.split('_');
+    sort[parts[0]] = parts[1] === 'desc' ? -1 : 1;
+  }
+
   try {
-    // const tasks = await Task.find({});
-    // const fetchedUser = await user.populate('tasks').execPopulate();
-    // console.log(user);
-    // console.log(tasks)
-    await req.user.populate('tasks').execPopulate();
+    await req.user
+      .populate({
+        path: 'tasks',
+        match,
+        options: {
+          limit: parseInt(req.query.limit),
+          skip: parseInt(req.query.skip),
+          sort: sort,
+        },
+      })
+      .execPopulate();
 
     if (!req.user.tasks) {
       return res.status(200).send('No tasks found');
     }
     res.status(200).send(req.user.tasks);
   } catch (e) {
-    console.log(e);
     res.status(400).send(e);
   }
 });

@@ -5,55 +5,61 @@ const log = require('../utils/log');
 const jwt = require('jsonwebtoken');
 const Task = require('../models/task');
 
-const userSchema = new mongoose.Schema({
-  name: {
-    type: String,
-    required: true,
-    trim: true,
-  },
-  password: {
-    type: String,
-    required: true,
-    trim: true,
-    minlength: 7,
-  },
-  email: {
-    type: String,
-    // Important note regarding the unique field:
-    // The table has to be dropped before making this will take effect.
-    // 1. Kill this node server (npm run dev)
-    // 2. Drop the table
-    // 3. Restart Node server (npm run dev)
-    // This does not work well with production.
-    // Alternatively, one can run this in the MongoDB shell, however
-    //    I have not tested it:
-    // db.users.createIndex({"email" : 1}, { unique: true })
-    // It is also suggested to use: db.<collection-name>.reIndex()
-    //    However this did not work for me
-    // https://stackoverflow.com/questions/5535610/mongoose-unique-index-not-working
-    unique: true,
-    required: true,
-    trim: true,
-    lowercase: true,
-    validate(value) {
-      if (!validator.isEmail(value)) {
-        throw new Error('Email address is not valid');
-      }
+const userSchema = new mongoose.Schema(
+  {
+    name: {
+      type: String,
+      required: true,
+      trim: true,
     },
-  },
-
-  // Storing all of a user's tokens so that they can be logged in on different
-  //    devices at the same time, and log out of one device while still being
-  //    logged in on the others
-  tokens: [
-    {
-      token: {
-        type: String,
-        require: true,
+    password: {
+      type: String,
+      required: true,
+      trim: true,
+      minlength: 7,
+    },
+    email: {
+      type: String,
+      // Important note regarding the unique field:
+      // The table has to be dropped before making this will take effect.
+      // 1. Kill this node server (npm run dev)
+      // 2. Drop the table
+      // 3. Restart Node server (npm run dev)
+      // This does not work well with production.
+      // Alternatively, one can run this in the MongoDB shell, however
+      //    I have not tested it:
+      // db.users.createIndex({"email" : 1}, { unique: true })
+      // It is also suggested to use: db.<collection-name>.reIndex()
+      //    However this did not work for me
+      // https://stackoverflow.com/questions/5535610/mongoose-unique-index-not-working
+      unique: true,
+      required: true,
+      trim: true,
+      lowercase: true,
+      validate(value) {
+        if (!validator.isEmail(value)) {
+          throw new Error('Email address is not valid');
+        }
       },
     },
-  ],
-});
+
+    // Storing all of a user's tokens so that they can be logged in on different
+    //    devices at the same time, and log out of one device while still being
+    //    logged in on the others
+    tokens: [
+      {
+        token: {
+          type: String,
+          require: true,
+        },
+      },
+    ],
+  },
+  // Options below
+  // Timestamps will show timestamps of each of the users
+  // createdAt and updatedAt
+  { timestamps: true },
+);
 
 userSchema.virtual('tasks', {
   ref: 'Task',
