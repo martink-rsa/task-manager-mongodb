@@ -20,6 +20,14 @@ app.use(express.json());
 app.use(userRouter);
 app.use(taskRouter);
 
+const multer = require('multer');
+const upload = multer({
+  dest: 'images',
+});
+app.post('/upload', upload.single('upload'), async (req, res) => {
+  res.status(200).send({ messsage: 'Success' });
+});
+
 app.listen(port, () => {
   log.info('Server is up on port:', port);
 });

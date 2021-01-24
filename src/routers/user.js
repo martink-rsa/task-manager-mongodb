@@ -3,6 +3,7 @@ const mongoose = require('mongoose');
 const router = new express.Router();
 const User = require('../models/user');
 const auth = require('../middleware/auth');
+const multer = require('multer');
 
 // Adding a new user
 router.post('/users', async (req, res) => {
@@ -107,6 +108,34 @@ router.post('/users/signup', async (req, res) => {
     user.save();
     const token = user.generateAuthToken();
     res.status(201).send({ user, token });
+  } catch (e) {
+    res.status(500).send('Error');
+  }
+});
+
+const upload = multer({
+  dest: 'images',
+  limits: {
+    fileSize: 1000000, // 1mb
+  },
+  fileFilter(req, file, cb) {
+    // if (!file.originalname.match(/\.(doc|docx)$/)) {
+    // Need to consider tiff, svg, webp and gif
+    if (!file.originalname.match(/\.(jpg|jpeg|png)$/)) {
+      return cb(new Error('Please upload an image file'));
+    }
+    cb(undefined, true);
+    /* cb(new Error('File must be a PDF'));
+    cb(undefined, true)
+    cb(undefined, false) */
+    console.log(file);
+  },
+});
+
+router.post('/users/me/avatar', upload.single('avatar'), async (req, res) => {
+  try {
+    //
+    res.status(201).send({ message: 'Image uploaded' });
   } catch (e) {
     res.status(500).send('Error');
   }
