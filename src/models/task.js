@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 
-const Task = mongoose.model('Task', {
+const taskSchema = new mongoose.Schema({
   description: {
     type: String,
     required: true, // Field has to be included by using required
@@ -10,6 +10,23 @@ const Task = mongoose.model('Task', {
     type: Boolean,
     default: false, // Setting a default value
   },
+  owner: {
+    type: mongoose.Schema.Types.ObjectId,
+    required: true,
+    // This creates a reference to the User object,
+    // which can then be populated with populate('owner').execPopulate()
+    ref: 'User',
+  },
 });
+
+taskSchema.pre('save', async function (next) {
+  const task = this;
+
+  console.log('Trigger before saving task');
+
+  next();
+});
+
+const Task = mongoose.model('Task', taskSchema);
 
 module.exports = Task;
