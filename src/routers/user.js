@@ -2,6 +2,7 @@ const express = require('express');
 const mongoose = require('mongoose');
 const router = new express.Router();
 const User = require('../models/user');
+const auth = require('../middleware/auth');
 
 // Adding a new user
 router.post('/users', async (req, res) => {
@@ -10,21 +11,16 @@ router.post('/users', async (req, res) => {
   try {
     // Await the saving of the document. Note how no variable is being used.
     await user.save();
-    res.status(201).send(user);
+    const token = await user.generateAuthToken();
+    res.status(201).send({ user, token });
   } catch (e) {
     res.status(400).send(e);
   }
 });
 
 // Get all users
-router.get('/users', async (req, res) => {
-  try {
-    // The result of the .find method is being stored
-    const users = await User.find({});
-    res.status(200).send(users);
-  } catch (e) {
-    res.status(500).send();
-  }
+router.get('/users/me', auth, async (req, res) => {
+  res.status(200).send(req.user);
 });
 
 // Get a single user using an id
@@ -114,9 +110,50 @@ router.post('/users/login', async (req, res) => {
       req.body.email,
       req.body.password,
     );
-    res.status(200).send(user);
+    const token = await user.generateAuthToken();
+    res.status(200).send({ user, token });
   } catch (e) {
     res.status(400).send({ message: e.message });
+  }
+});
+
+router.post('/users/logout', auth, async (req, res) => {
+  try {
+    // Token is added to req in the auth middleware
+    // Filter through the user's tokens and return all
+    //    tokens that do not match the token in req
+    req.user.tokens = req.user.tokens.filter((token) => {
+      return token.token !== req.token;
+    });
+    // Save the user so that the array of tokens is updated
+    await req.user.save();
+    res.status(200).send({ message: 'Logged out' });
+  } catch (e) {
+    res.status(500).send({ message: e.message });
+  }
+});
+
+router.post('/users/logoutAll', auth, async (req, res) => {
+  try {
+    req.user.tokens = [];
+    await req.user.save();
+    res.status(200).send({ message: 'Logged out of all devices' });
+    //
+  } catch (e) {
+    res.status(500).send({ message: e.message });
+  }
+});
+
+router.post('/users/signup', async (req, res) => {
+  // User enters details (name, password, email)
+
+  try {
+    const user = new User(req.body);
+    user.save();
+    const token = user.generateAuthToken();
+    res.status(201).send({ user, token });
+  } catch (e) {
+    res.status(500).send('Error');
   }
 });
 

@@ -2,6 +2,10 @@ const mongoose = require('mongoose');
 const validator = require('validator');
 const bcrypt = require('bcrypt');
 const log = require('../utils/log');
+const jwt = require('jsonwebtoken');
+const dotenv = require('dotenv');
+
+dotenv.config();
 
 const userSchema = new mongoose.Schema({
   name: {
@@ -39,7 +43,71 @@ const userSchema = new mongoose.Schema({
       }
     },
   },
+
+  // Storing all of a user's tokens so that they can be logged in on different
+  //    devices at the same time, and log out of one device while still being
+  //    logged in on the others
+  tokens: [
+    {
+      token: {
+        type: String,
+        require: true,
+      },
+    },
+  ],
 });
+
+// Database logic should be encapsulated within the data model.
+// Mongoose provides 2 ways of doing this, methods and statics.
+// Methods adds an instance method to documents whereas Statics
+// adds static "class" methods to the Models itself.
+// https://stackoverflow.com/questions/39708841/what-is-the-use-of-mongoose-methods-and-statics/52202920
+// i.e. use method on individual documents if you want to manipulate
+// the individual document like adding tokens.
+// Use statics approach if you want to query the whole collection
+// Generate a jwt token and add it to the user's list of tokens
+userSchema.methods.generateAuthToken = async function () {
+  const user = this;
+  const token = jwt.sign(
+    { _id: user._id.toString() },
+    process.env.TOKEN_SECRET,
+  );
+
+  user.tokens = user.tokens.concat({ token: token });
+
+  await user.save();
+
+  return token;
+};
+
+// This method, which was getPublicProfile, has been changed
+// to toJSON, which is called whenever the data is turned into
+// JSON data. This is automatically happening in the app as
+// we are sending back data as JSON
+userSchema.methods.toJSON = function () {
+  const user = this;
+
+  // Create a user object so we can manipulate the data,
+  // such as removing the password field
+  const userObject = user.toObject();
+
+  delete userObject.password;
+  delete userObject.tokens;
+
+  return userObject;
+};
+/* userSchema.methods.getPublicProfile = function () {
+  const user = this;
+
+  // Create a user object so we can manipulate the data,
+  // such as removing the password field
+  const userObject = user.toObject();
+
+  delete userObject.password;
+  delete userObject.tokens;
+
+  return userObject;
+}; */
 
 // Creating a custom method in the schema that will check the
 //    user credentials
