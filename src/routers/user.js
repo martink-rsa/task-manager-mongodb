@@ -1,9 +1,10 @@
 const express = require('express');
 const mongoose = require('mongoose');
+const multer = require('multer');
+const sharp = require('sharp');
 const router = new express.Router();
 const User = require('../models/user');
 const auth = require('../middleware/auth');
-const multer = require('multer');
 
 // Adding a new user
 router.post('/users', async (req, res) => {
@@ -132,7 +133,12 @@ router.post(
   auth,
   upload.single('avatar'),
   async (req, res) => {
-    req.user.avatar = req.file.buffer;
+    // Resizing the image using sharp
+    const buffer = await sharp(req.file.buffer)
+      .resize({ width: 250, height: 250 })
+      .png()
+      .toBuffer();
+    req.user.avatar = buffer;
     await req.user.save();
     res.status(200).send({ message: 'Image uploaded' });
   },
@@ -166,7 +172,7 @@ router.get('/users/:id/avatar', async (req, res) => {
       throw new Error();
     }
 
-    res.set('Content-Type', 'image/jpg');
+    res.set('Content-Type', 'image/png');
     res.status(200).send(user.avatar);
   } catch (e) {
     res.status(500).send('Error getting user avatar');
