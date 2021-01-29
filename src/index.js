@@ -1,18 +1,17 @@
 const express = require('express');
 const log = require('./utils/log');
-const dotenv = require('dotenv');
 // Routers
 const userRouter = require('./routers/user');
 const taskRouter = require('./routers/task');
 // Middleware
 
+require('./emails/account');
+
 // Load the Mongoose file which has the MongoDB connection
 require('./db/mongoose');
 
-dotenv.config();
-
 const app = express();
-const port = process.env.PORT || 3000;
+const port = process.env.PORT;
 
 app.use(express.json());
 

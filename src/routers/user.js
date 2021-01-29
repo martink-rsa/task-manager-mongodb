@@ -5,6 +5,10 @@ const sharp = require('sharp');
 const router = new express.Router();
 const User = require('../models/user');
 const auth = require('../middleware/auth');
+const {
+  sendWelcomeEmail,
+  sendCancellationEmail,
+} = require('../emails/account');
 
 // Adding a new user
 router.post('/users', async (req, res) => {
@@ -14,6 +18,7 @@ router.post('/users', async (req, res) => {
     // Await the saving of the document. Note how no variable is being used.
     await user.save();
     const token = await user.generateAuthToken();
+    sendWelcomeEmail(user.email, user.name);
     res.status(201).send({ user, token });
   } catch (e) {
     res.status(400).send(e);
@@ -52,6 +57,7 @@ router.patch('/users/me', auth, async (req, res) => {
 router.delete('/users/me', auth, async (req, res) => {
   try {
     await req.user.remove();
+    sendCancellationEmail(req.user.email, req.user.name);
     res.status(200).send({ message: 'User deleted' });
   } catch (e) {
     res.status(500).send(e);
