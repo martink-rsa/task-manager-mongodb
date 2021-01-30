@@ -22,13 +22,11 @@ const taskSchema = new mongoose.Schema(
   // Options below
   // Timestamps will show timestamps of each of the tasks
   // createdAt and updatedAt
-  { timestamps: true },
+  { timestamps: true }
 );
 
 taskSchema.pre('save', async function (next) {
   const task = this;
-
-  console.log('Trigger before saving task');
 
   next();
 });
