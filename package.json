@@ -7,7 +7,7 @@
     "dev": "env-cmd -f ./.env.dev nodemon src/index.js",
     "start": "node src/index.js",
     "startdb": "/home/martin/mongodb/bin/mongod --dbpath=/home/martin/mongodb-data",
-    "test": "env-cmd -f ./.env.test jest --watch"
+    "test": "env-cmd -f ./.env.test jest --watch --runInBand"
   },
   "jest": {
     "testEnvironment": "node"
