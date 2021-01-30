@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 const log = require('../utils/log');
 
+console.log(process.env.MONGODB_URL);
 mongoose.connect(
   process.env.MONGODB_URL,
   {
